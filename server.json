@@ -32,13 +32,9 @@
 	],
 	"provisioners": [
 		{
-			"execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
 			"inline": [
-				"echo 'Hello, World!' > test.txt",
-				"apt-get update",
-				"apt-get upgrade -y",
-				"apt-get -y install nginx",
-				"/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+				"echo 'Hello, World!' > index.html",
+				"nohup busybox httpd -f -p 80 &"
 			],
 			"inline_shebang": "/bin/sh -x",
 			"type": "shell"
