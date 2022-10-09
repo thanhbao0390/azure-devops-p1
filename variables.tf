@@ -1,6 +1,6 @@
 variable "prefix" {
   description = "The prefix which should be used for all resources in this example"
-  default = "baont1-azure-webserver"
+  default = "baont1-azure-webserver2"
 }
 
 variable "location" {
@@ -12,7 +12,7 @@ variable "tags" {
   description = "A map of the tags to use for the resources that are deployed"
   type        = map(string)
   default = {
-    Name = "baont1-azure-webserver"
+    Name = "baont1-azure-webserver2"
   }
 }
 

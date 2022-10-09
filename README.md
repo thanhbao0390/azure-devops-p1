@@ -61,12 +61,12 @@ For this project, you will write a Packer template and a Terraform template to d
     - Complete terraform configuration files
     - Plan the Terraform deployment: 
     ```
-        terraform plan -var-file terraform.tfvars -out terraformPlan.out
+        terraform plan -var-file terraform.tfvars -out solution.out
     ```
 
     - Apply the Terraform deployment: 
     ```
-        terraform apply "terraformPlan.out"
+        terraform apply "solution.out"
     ```
 
 4. Destroy all Azure resources
