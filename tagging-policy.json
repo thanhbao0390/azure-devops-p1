@@ -2,12 +2,20 @@
     "if": {
         "allof": [
             {
-                "field": "[concat('tags[', parameters('tagName'), ']')]",
-                "exists": "false"
+                "field": "type",
+                "equals": "Microsoft.Compute/virtualMachines"
+            },
+            {
+                "field": "Microsoft.Compute/virtualMachines/osProfile.linuxConfiguration",
+                "exists": "True"
+            },
+            {
+                "field": "Microsoft.Compute/virtualMachines/osProfile.linuxConfiguration.disablePasswordAuthentication",
+                "equals": "false"
             }
         ]
     },
     "then": {
-        "effect": "deny"
+        "effect": "audit"
     }
 }

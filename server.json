@@ -27,7 +27,7 @@
 			},
 
 			"location": "East US",
-			"vm_size": "Standard_B1s"
+			"vm_size": "Standard_F2"
 		}
 	],
 	"provisioners": [

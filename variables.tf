@@ -1,6 +1,6 @@
 variable "prefix" {
   description = "The prefix which should be used for all resources in this example"
-  default = "baont1-azure-webserver2"
+  default = "baont1-azure-webapp"
 }
 
 variable "location" {
@@ -12,7 +12,7 @@ variable "tags" {
   description = "A map of the tags to use for the resources that are deployed"
   type        = map(string)
   default = {
-    Name = "baont1-azure-webserver2"
+    Name = "baont1-azure-webapp"
   }
 }
 
@@ -22,14 +22,18 @@ variable "instance_count" {
   default = 2
 }
 
-variable "application_port" {
-  description = "The port that you want to expose to the external load balancer"
-  default     = 80
-}
-
 variable "admin_username" {
   description = "Default username for admin"
-  default = "azureuser"
+  default = "adminuser"
+}
+
+variable "admin_password" {
+  description = "Default password for admin"
+  default = "Password@12345"
+}
+
+variable "subscription_id" {
+  description = "Subscription id of the Packer image"
 }
 
 variable "packer_resource_group" {
