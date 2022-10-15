@@ -13,7 +13,7 @@ locals {
 
 resource "azurerm_virtual_network" "main" {
   name                = "${var.prefix}-network"
-  address_space       = ["10.0.0.0/22"]
+  address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 }
@@ -39,8 +39,8 @@ resource "azurerm_network_security_rule" "main-Inbound" {
   protocol                    = "*"
   source_port_range           = "*"
   destination_port_range      = "*"
-  source_address_prefix       = "VirtualNetwork"
-  destination_address_prefix  = "VirtualNetwork"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.main.name
   network_security_group_name = azurerm_network_security_group.main.name
 }
@@ -50,20 +50,6 @@ resource "azurerm_network_security_rule" "main-Outbound" {
   priority                    = 101
   direction                   = "Outbound"
   access                      = "Allow"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "VirtualNetwork"
-  destination_address_prefix  = "VirtualNetwork"
-  resource_group_name         = azurerm_resource_group.main.name
-  network_security_group_name = azurerm_network_security_group.main.name
-}
-
-resource "azurerm_network_security_rule" "main-DenyAllInbound" {
-  name                        = "${var.prefix}-DenyAllInbound"
-  priority                    = 100
-  direction                   = "Inbound"
-  access                      = "Deny"
   protocol                    = "*"
   source_port_range           = "*"
   destination_port_range      = "*"
@@ -97,6 +83,7 @@ resource "azurerm_public_ip" "main" {
   location            = azurerm_resource_group.main.location
   allocation_method   = "Static"
 }
+
 resource "azurerm_lb" "main" {
   name                = "${var.prefix}-lb"
   location            = azurerm_resource_group.main.location
@@ -110,7 +97,7 @@ resource "azurerm_lb" "main" {
 
 resource "azurerm_lb_backend_address_pool" "main" {
   loadbalancer_id     = azurerm_lb.main.id
-  name                = "BackEndAddressPool"
+  name                = "${var.prefix}-backend-address-pool"
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "main" {
@@ -145,6 +132,7 @@ resource "azurerm_linux_virtual_machine" "main" {
     storage_account_type = "Standard_LRS"
     caching              = "ReadWrite"
   }
+
 }
 
 resource "azurerm_managed_disk" "main" {

@@ -30,14 +30,19 @@
 			"vm_size": "Standard_F2"
 		}
 	],
-	"provisioners": [
-		{
-			"inline": [
-				"echo 'Hello, World!' > index.html",
-				"nohup busybox httpd -f -p 80 &"
-			],
-			"inline_shebang": "/bin/sh -x",
-			"type": "shell"
-		}
-	]
+	"provisioners": [{
+
+		"inline": [
+			"su -s",
+			"sudo apt update",
+			"sudo apt install -y apache2",
+			"sudo systemctl status apache2",
+			"sudo chmod -R 777 /var/www/html/",
+			"sudo echo 'Hello, World!' > /var/www/html/index.html",
+			"curl localhost",
+			"netstat -nplt"
+		],
+		"inline_shebang": "/bin/sh -x",
+		"type": "shell"
+		}]
 }
