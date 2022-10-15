@@ -43,3 +43,8 @@ variable "packer_resource_group" {
 variable "packer_image_name" {
   description = "Image name of the Packer image"
 }
+
+variable "port_web" {
+  description = "The Port Web"
+  default = "80"
+}

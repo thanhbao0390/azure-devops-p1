@@ -18,45 +18,11 @@ resource "azurerm_virtual_network" "main" {
   resource_group_name = azurerm_resource_group.main.name
 }
 
-resource "azurerm_subnet" "internal" {
-  name                 = "internal"
+resource "azurerm_subnet" "main" {
+  name                 = "main"
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.2.0/24"]
-}
-
-resource "azurerm_network_security_group" "main" {
-  name                = "${var.prefix}-security-group"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-}
-
-resource "azurerm_network_security_rule" "main-Inbound" {
-  name                        = "${var.prefix}-Inbound"
-  priority                    = 102
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.main.name
-  network_security_group_name = azurerm_network_security_group.main.name
-}
-
-resource "azurerm_network_security_rule" "main-Outbound" {
-  name                        = "${var.prefix}-Outbound"
-  priority                    = 101
-  direction                   = "Outbound"
-  access                      = "Allow"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
-  resource_group_name         = azurerm_resource_group.main.name
-  network_security_group_name = azurerm_network_security_group.main.name
 }
 
 resource "azurerm_network_interface" "main" {
@@ -66,15 +32,10 @@ resource "azurerm_network_interface" "main" {
   location            = azurerm_resource_group.main.location
 
   ip_configuration {
-    name                          = "internal"
-    subnet_id                     = azurerm_subnet.internal.id
+    name                          = "primary"
+    subnet_id                     = azurerm_subnet.main.id
     private_ip_address_allocation = "Dynamic"
   }
-}
-resource "azurerm_network_interface_security_group_association" "main" {
-  count                     = local.instance_count
-  network_interface_id      = azurerm_network_interface.main.*.id[count.index]
-  network_security_group_id = azurerm_network_security_group.main.id
 }
 
 resource "azurerm_public_ip" "main" {
@@ -95,22 +56,69 @@ resource "azurerm_lb" "main" {
   }
 }
 
+resource "azurerm_lb_nat_rule" "main" {
+  resource_group_name            = azurerm_resource_group.main.name
+  loadbalancer_id                = azurerm_lb.main.id
+  name                           = "HTTPSAccess"
+  protocol                       = "Tcp"
+  frontend_port                  = "${var.port_web}"
+  backend_port                   = "${var.port_web}"
+  frontend_ip_configuration_name = azurerm_lb.main.frontend_ip_configuration[0].name
+}
+
 resource "azurerm_lb_backend_address_pool" "main" {
+  resource_group_name = azurerm_resource_group.main.name
   loadbalancer_id     = azurerm_lb.main.id
   name                = "${var.prefix}-backend-address-pool"
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "main" {
   count                   = local.instance_count
-  network_interface_id    = azurerm_network_interface.main.*.id[count.index]
-  ip_configuration_name   = "internal"
+  network_interface_id    = element(azurerm_network_interface.main.*.id, count.index)
   backend_address_pool_id = azurerm_lb_backend_address_pool.main.id
+  ip_configuration_name   = "primary"
+}
+
+resource "azurerm_network_security_group" "webserver" {
+  name                = "tls_webserver"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  security_rule {
+    access                     = "Allow"
+    direction                  = "Inbound"
+    name                       = "tls-Inbound"
+    priority                   = 100
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    source_address_prefix      = "*"
+    destination_port_range     = "${var.port_web}"
+    destination_address_prefix = "*"
+  }
+  security_rule {
+    access                     = "Allow"
+    direction                  = "Outbound"
+    name                       = "tls-Outbound"
+    priority                   = 101
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    source_address_prefix      = "*"
+    destination_port_range     = "${var.port_web}"
+    destination_address_prefix = "*"
+  }
+}
+
+resource "azurerm_subnet_network_security_group_association" "main" {
+  subnet_id                 = azurerm_subnet.main.id
+  network_security_group_id = azurerm_network_security_group.webserver.id
 }
 
 resource "azurerm_availability_set" "main" {
   name                         = "${var.prefix}avset"
   location                     = azurerm_resource_group.main.location
   resource_group_name          = azurerm_resource_group.main.name
+  platform_fault_domain_count  = 2
+  platform_update_domain_count = 2
+  managed                      = true
 }
 
 resource "azurerm_linux_virtual_machine" "main" {
@@ -123,7 +131,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   admin_password                  = "${var.admin_password}"
   disable_password_authentication = false
   network_interface_ids = [
-    azurerm_network_interface.main.*.id[count.index],
+    azurerm_network_interface.main[count.index].id,
   ]
   availability_set_id             = azurerm_availability_set.main.id
   source_image_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.packer_resource_group}/providers/Microsoft.Compute/images/${var.packer_image_name}"
@@ -147,8 +155,8 @@ resource "azurerm_managed_disk" "main" {
 
 resource "azurerm_virtual_machine_data_disk_attachment" "main" {
   count              = local.instance_count
-  managed_disk_id    = azurerm_managed_disk.main.*.id[count.index]
-  virtual_machine_id = azurerm_linux_virtual_machine.main.*.id[count.index]
+  managed_disk_id    = azurerm_managed_disk.main[count.index].id
+  virtual_machine_id = azurerm_linux_virtual_machine.main[count.index].id
   lun                = 10*count.index
   caching            = "ReadWrite"
 }
