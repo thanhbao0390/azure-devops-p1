@@ -40,20 +40,20 @@ resource "azurerm_lb" "main" {
   resource_group_name = azurerm_resource_group.main.name
 
   frontend_ip_configuration {
-    name                 = "PublicIPAddress"
+    name                 = "primary"
     public_ip_address_id = azurerm_public_ip.main.id
   }
 }
 
 resource "azurerm_lb_backend_address_pool" "main" {
   loadbalancer_id     = azurerm_lb.main.id
-  name                = "${var.prefix}-BackEndAddressPool"
+  name                = "acctestpool"
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "main" {
   network_interface_id    = azurerm_network_interface.main.id
+  ip_configuration_name   = "internal"
   backend_address_pool_id = azurerm_lb_backend_address_pool.main.id
-  ip_configuration_name   = "primary"
 }
 
 resource "azurerm_public_ip" "main" {
