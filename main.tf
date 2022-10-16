@@ -30,7 +30,6 @@ resource "azurerm_network_interface" "main" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.main.id
     private_ip_address_allocation = "Dynamic"
-	  #public_ip_address_id = azurerm_public_ip.main.id
   }
 }
 
@@ -43,6 +42,27 @@ resource "azurerm_lb" "main" {
     name                 = "primary"
     public_ip_address_id = azurerm_public_ip.main.id
   }
+}
+
+resource "azurerm_lb_probe" "main" {
+  resource_group_name = azurerm_resource_group.main.name
+  loadbalancer_id = azurerm_lb.main.id
+  name            = "${var.prefix}-probe"
+  port            = var.port_web
+  protocol        = "Tcp"
+  interval_in_seconds = 5
+}
+
+resource "azurerm_lb_rule" "main" {
+  resource_group_name = azurerm_resource_group.main.name
+  loadbalancer_id                = azurerm_lb.main.id
+  name                           = "${var.prefix}-LBRule"
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.main.id,]
+  protocol                       = "Tcp"
+  frontend_port                  = var.port_web
+  backend_port                   = var.port_web
+  frontend_ip_configuration_name = "primary"
+  probe_id                       = azurerm_lb_probe.main.id
 }
 
 resource "azurerm_lb_backend_address_pool" "main" {
