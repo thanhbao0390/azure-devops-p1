@@ -34,7 +34,7 @@ resource "azurerm_network_security_rule" "AllowInbound" {
   access                      = "Allow"
   protocol                    = "*"
   source_port_range           = "*"
-  destination_port_range      = "*"
+  destination_port_range      = var.port_web
   source_address_prefix       = "VirtualNetwork"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.main.name
@@ -63,7 +63,7 @@ resource "azurerm_network_security_rule" "DenyFromInternet" {
   protocol                    = "*"
   source_port_range           = "*"
   destination_port_range      = "*"
-  source_address_prefix       = "Internet"
+  source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.main.name
   network_security_group_name = azurerm_network_security_group.main.name
