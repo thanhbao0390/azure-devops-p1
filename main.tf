@@ -29,21 +29,49 @@ resource "azurerm_network_security_group" "main" {
 
 resource "azurerm_network_security_rule" "AllowInbound" {
   name                        = "${var.prefix}-AllowInbound"
-  priority                    = 102
+  priority                    = 100
   direction                   = "Inbound"
   access                      = "Allow"
   protocol                    = "*"
   source_port_range           = "*"
   destination_port_range      = "*"
   source_address_prefix       = "VirtualNetwork"
-  destination_address_prefix  = "VirtualNetwork"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.main.name
+  network_security_group_name = azurerm_network_security_group.main.name
+}
+
+resource "azurerm_network_security_rule" "AllowInbound-LB" {
+  name                        = "${var.prefix}-AllowInbound-LB"
+  priority                    = 150
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "*"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefix       = "AzureLoadBalancer"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.main.name
+  network_security_group_name = azurerm_network_security_group.main.name
+}
+
+resource "azurerm_network_security_rule" "DenyFromInternet" {
+  name                        = "${var.prefix}-DenyFromInternet"
+  priority                    = 300
+  direction                   = "Inbound"
+  access                      = "Deny"
+  protocol                    = "*"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefix       = "Internet"
+  destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.main.name
   network_security_group_name = azurerm_network_security_group.main.name
 }
 
 resource "azurerm_network_security_rule" "AllowOutbound" {
   name                        = "${var.prefix}-AllowOutbound"
-  priority                    = 101
+  priority                    = 200
   direction                   = "Outbound"
   access                      = "Allow"
   protocol                    = "*"
@@ -51,20 +79,6 @@ resource "azurerm_network_security_rule" "AllowOutbound" {
   destination_port_range      = "*"
   source_address_prefix       = "VirtualNetwork"
   destination_address_prefix  = "VirtualNetwork"
-  resource_group_name         = azurerm_resource_group.main.name
-  network_security_group_name = azurerm_network_security_group.main.name
-}
-
-resource "azurerm_network_security_rule" "DenyFromInternet" {
-  name                        = "${var.prefix}-DenyFromInternet"
-  priority                    = 500
-  direction                   = "Inbound"
-  access                      = "Deny"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "*"
-  destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.main.name
   network_security_group_name = azurerm_network_security_group.main.name
 }
